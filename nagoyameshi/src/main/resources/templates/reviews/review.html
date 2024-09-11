@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>店舗詳細</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .fa-star.checked {
+            color: yellow;
+        }
+    </style>
+</head>
+<body>
+    <h1 th:text="${storeinfo.storename}">店舗名</h1>
+    <p><strong>住所:</strong> <span th:text="${storeinfo.address}">住所</span></p>
+    <p><strong>電話番号:</strong> <span th:text="${storeinfo.phoneNumber}">電話番号</span></p>
+    <h3>平均スコア: 
+        <span th:text="${#numbers.formatDecimal(averageScore, 2, 2)}">0.00</span> / 5
+    </h3>
+    <div id="average-stars">
+        <span th:each="i : ${#numbers.sequence(1, 5)}" 
+              class="fa fa-star" 
+              th:classappend="${i <= averageScore ? ' checked' : ''}"></span>
+    </div>
+
+    <h2>レビュー</h2>
+    <div th:each="review : ${reviews}">
+        <p><strong>スコア:</strong> 
+            <span th:each="i : ${#numbers.sequence(1, 5)}"
+                  class="fa fa-star" th:classappend="${i <= review.star ? ' checked' : ''}"></span>
+        </p>
+        <p><strong>コメント:</strong> <span th:text="${review.comment}">コメント</span></p>
+        <hr>
+    </div>
+
+    <!-- ユーザーが認証されている場合のみ表示 -->
+    <sec:authorize access="isAuthenticated()">
+        <h2>レビューを書く</h2>
+        <form method="POST" th:action="@{/review}">
+            <input type="hidden" name="storeId" th:value="${storeinfo.id}" />
+            <textarea name="comment" placeholder="レビューを入力してください" required></textarea>
+            <br>
+            <div id="review-stars">
+                <span class="fa fa-star" data-score="1"></span>
+                <span class="fa fa-star" data-score="2"></span>
+                <span class="fa fa-star" data-score="3"></span>
+                <span class="fa fa-star" data-score="4"></span>
+                <span class="fa fa-star" data-score="5"></span>
+            </div>
+            <input type="hidden" name="star" id="review-score" value="0" />
+            <br>
+            <button type="submit">レビューを送信</button>
+        </form>
+    </sec:authorize>
+
+    <!-- ユーザーが認証されていない場合に表示 -->
+    <sec:authorize access="isAnonymous()">
+        <p>レビューを書くには<a th:href="@{/login}">ログイン</a>が必要です。</p>
+    </sec:authorize>
+
+    <script>
+        $(document).ready(function(){
+            $('#review-stars span').click(function(){
+                var score = $(this).data('score');
+                $('#review-score').val(score);
+                $('#review-stars span').removeClass('checked');
+                $(this).prevAll().addBack().addClass('checked');
+            });
+        });
+    </script>
+</body>
+</html>
